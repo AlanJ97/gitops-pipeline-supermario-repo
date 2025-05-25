@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: supermariogame-deployment
+  labels:
+    app: supermario
+    motivo: udemy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: supermario
+  template:
+    metadata:
+      labels:
+        app: supermario
+    spec:
+      containers:
+        - name: supermario-container
+          image: docker.io/alandocker97/supermariogitopsproject:2
+          ports:
+            - containerPort: 8080
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: supermario-service
+  labels:
+    app: supermario
+    motivo: udemy
+spec:
+  selector:
+    app: supermario
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: LoadBalancer
