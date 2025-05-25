@@ -28,6 +28,17 @@ jobs:
           docker pull docker.io/alandocker97/supermariogitopsproject:${{ env.VERSION }}
           docker save -o supermariolatestdockerimage.tar docker.io/alandocker97/supermariogitopsproject:${{ env.VERSION }}
      
+          echo "Verifying saved tarball in current directory ($(pwd)):"
+          if [ -f "supermariolatestdockerimage.tar" ]; then
+            echo "SUCCESS: supermariolatestdockerimage.tar found!"
+            ls -lh supermariolatestdockerimage.tar
+          else
+            echo "ERROR: supermariolatestdockerimage.tar NOT found in $(pwd)!"
+            echo "Current directory contents:"
+            ls -lA
+            exit 1 # Fail the workflow if the tarball isn't created
+          fi
+          
       - name: Run Trivy vulnerability scanner in tarball mode
         uses: aquasecurity/trivy-action@master
         with:
