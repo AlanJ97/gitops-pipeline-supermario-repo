@@ -22,8 +22,8 @@ jobs:
      
       - name: Build Docker image
         run: |
-          docker build -t docker.io/alandocker97/supermariogitopsproject: ${{ env.VERSION }} .
+          docker build -t docker.io/alandocker97/supermariogitopsproject:${{ env.VERSION }} .
      
       - name: Push Docker image
         run: |
-          docker push docker.io/alandocker97/supermariogitopsproject: ${{ env.VERSION }}
+          docker push docker.io/alandocker97/supermariogitopsproject:${{ env.VERSION }}
