@@ -38,10 +38,66 @@ jobs:
             ls -lA
             exit 1 # Fail the workflow if the tarball isn't created
           fi
-          
+
       - name: Run Trivy vulnerability scanner in tarball mode
         uses: aquasecurity/trivy-action@master
         with:
-          input: /github/workspace/supermariolatestdockerimage.tar
+          You're very close! The debugging output confirms that `supermariolatestdockerimage.tar` is successfully created at:
+`/home/runner/work/gitops-pipeline-supermario-repo/gitops-pipeline-supermario-repo/supermariolatestdockerimage.tar`
+
+The error from Trivy is:
+`unable to open /github/workspace/supermariolatestdockerimage.tar as a Docker image: unable to open the file: open /github/workspace/supermariolatestdockerimage.tar: no such file or directory`
+
+This means the Trivy action is looking for the file at the literal path `/github/workspace/supermariolatestdockerimage.tar`, which is different from where your file actually is.
+
+In GitHub Actions, the environment variable `${{ github.workspace }}` (or `$GITHUB_WORKSPACE` in shell scripts) holds the actual path to your checked-out repository. In your case, this path is `/home/runner/work/gitops-pipeline-supermario-repo/gitops-pipeline-supermario-repo`.
+
+You need to provide the correct path to the Trivy action.
+
+**Solution:**
+
+Modify the `input` for the Trivy action to use the `${{ github.workspace }}` context variable to construct the correct absolute path to your saved tarball.
+
+Change this line in your Trivy step:
+`input: /github/workspace/supermariolatestdockerimage.tar`
+
+To this:
+`input: '${{ github.workspace }}/supermariolatestdockerimage.tar'`
+
+Here's how the updated Trivy step should look:
+
+````yaml
+# ...existing code...
+          if [ -f "supermariolatestdockerimage.tar" ]; then
+            echo "SUCCESS: supermariolatestdockerimage.tar found!"
+            ls -lh supermariolatestdockerimage.tar
+          else
+            echo "ERROR: supermariolatestdockerimage.tar NOT found in $(pwd)!"
+            echo "Current directory contents:"
+            ls -lA
+            exit 1 # Fail the workflow if the tarball isn't created
+          fi
+          
+      - name: Run Trivy vulnerability scanner in tarball mode
+        uses: aquasecurity/trivy-action@master # Consider pinning to a specific version e.g. @0.20.0
+        with:
+          input: '${{ github.workspace }}/supermariolatestdockerimage.tar' # Corrected path
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+# ...existing code...
+````
+
+**Explanation:**
+
+*   `${{ github.workspace }}` will be replaced by the GitHub Actions runner with the actual path to your workspace (e.g., `/home/runner/work/gitops-pipeline-supermario-repo/gitops-pipeline-supermario-repo`).
+*   By concatenating this with `/supermariolatestdockerimage.tar`, you provide Trivy with the correct absolute path to the saved image.
+
+Alternatively, since the `docker save` command saves the file in the root of your workspace (`${{ github.workspace }}`), and the Trivy action typically operates with its working directory set to the workspace root, you could also often use a relative path:
+
+`input: 'supermariolatestdockerimage.tar'`
+
+However, using the explicit `${{ github.workspace }}/supermariolatestdockerimage.tar` is more robust as it doesn't rely on assumptions about the action's internal working directory.
+
+Try the change with `${{ github.workspace }}/supermariolatestdockerimage.tar` first.
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
